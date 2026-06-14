@@ -349,21 +349,60 @@
     }
 
     // 智能解析逻辑 (AI Proxy 模拟)
-    function parseClipboard() {
-        const text = document.getElementById('smartPaste').value;
-        // 模拟识别逻辑：寻找关键词对应的数字
-        // 实际开发中可以使用正则匹配 Yahoo 的表格结构
-        alert("智能解析已激活：正在识别数值并自动填表...");
-        
-        const peMatch = text.match(/PE\s*Ratio\s*\(TTM\)\s*([\d\.]+)/i);
-        if (peMatch) document.getElementById('valuationValue').value = peMatch[1];
-        
-        const roeMatch = text.match(/Return\s*on\s*Equity\s*([\d\.]+)/i);
-        if (roeMatch) document.getElementById('roe').value = roeMatch[1];
-        
-        const netIncMatch = text.match(/Net\s*Income\s*Common\s*Stockholders\s*([\d,]+)/i);
-        if (netIncMatch) document.getElementById('netIncome').value = netIncMatch[1].replace(/,/g, '');
+function parseClipboard() {
+    const text = document.getElementById('smartPaste').value;
+    
+    // 定义匹配规则
+    const extract = (regex) => {
+        const match = text.match(regex);
+        return match ? match[1].replace(/,/g, '') : null;
+    };
+
+    // 自动填充基础字段
+    const name = extract(/股票名称:\s*(.+)/);
+    if (name) document.getElementById('stockName').value = name;
+
+    const pe = extract(/PE_TTM:\s*([\d\.]+)/);
+    if (pe) document.getElementById('valuationValue').value = pe;
+
+    const roe = extract(/ROE:\s*([\d\.]+)/);
+    if (roe) document.getElementById('roe').value = roe;
+
+    const payout = extract(/股利支付率:\s*([\d\.]+)/);
+    if (payout) document.getElementById('payout').value = payout;
+
+    // 自动填充红灯检测字段
+    const assets = extract(/总资产:\s*([\d\.]+)/);
+    if (assets) document.getElementById('assets').value = assets;
+
+    const liab = extract(/总负债:\s*([\d\.]+)/);
+    if (liab) document.getElementById('liabilities').value = liab;
+
+    const opIn = extract(/营业利润:\s*([\d\.]+)/);
+    if (opIn) document.getElementById('opIncome').value = opIn;
+
+    const netIn = extract(/净利润:\s*([\d\.]+)/);
+    if (netIn) document.getElementById('netIncome').value = netIn;
+
+    const gw = extract(/商誉存货:\s*([\d\.]+)/);
+    if (gw) document.getElementById('goodwill').value = gw;
+
+    const imp = extract(/资产减值:\s*([\d\.]+)/);
+    if (imp) document.getElementById('impairment').value = imp;
+
+    const ocf = extract(/经营现金流:\s*([\d\.]+)/);
+    if (ocf) document.getElementById('opCashFlow').value = ocf;
+
+    const industry = extract(/行业:\s*(.+)/);
+    if (industry) {
+        // 简单的周期行业自动识别
+        const cycleKeywords = ['半导体', '航运', '钢铁', '煤炭', '石油', '化工', 'Semiconductors', 'Steel', 'Oil'];
+        const isCycle = cycleKeywords.some(k => industry.includes(k));
+        document.getElementById('industry').value = isCycle ? 'cycle' : 'none';
     }
+
+    alert("✅ 解析完成！核心指标已自动填入表单。");
+}
 </script>
 
 </body>
