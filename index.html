@@ -3,24 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>市赚率分析器 Pro</title>
+    <title>PR Calculator Pro</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0a0a0a">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0a0a0a; color: #e5e5e5; }
-        .glass-card { background: rgba(23, 23, 23, 0.8); border: 1px solid #333; backdrop-filter: blur(10px); }
-        .input-field { background: #171717; border: 1px solid #333; padding: 12px; border-radius: 8px; width: 100%; color: #fff; }
+        body { font-family: 'Inter', sans-serif; background-color: #0a0a0a; color: #e5e5e5; transition: all 0.3s; }
+        .glass-card { background: rgba(23, 23, 23, 0.8); border: 1px solid #333; }
+        .input-field { background: #171717; border: 1px solid #333; padding: 12px; border-radius: 8px; width: 100%; color: #fff; font-size: 14px; }
         .input-field:focus { border-color: #3b82f6; outline: none; }
-        .btn-primary { background: #3b82f6; color: white; padding: 12px; border-radius: 8px; font-weight: 600; transition: all 0.2s; }
-        .btn-primary:active { transform: scale(0.98); }
-        .status-red { color: #ef4444; }
-        .status-yellow { color: #f59e0b; }
-        .status-green { color: #10b981; }
-        /* 隐藏滚动条 */
-        ::-webkit-scrollbar { width: 0px; }
+        .btn-primary { background: #3b82f6; color: white; padding: 12px; border-radius: 8px; font-weight: 600; }
+        .label-text { font-size: 11px; color: #888; margin-bottom: 4px; display: block; font-weight: 600; text-transform: uppercase; }
+        .hidden { display: none; }
     </style>
 </head>
 <body class="pb-20">
@@ -28,284 +24,303 @@
 <div id="app" class="max-w-md mx-auto p-4">
     <!-- Header -->
     <header class="flex justify-between items-center mb-6 pt-4">
-        <h1 class="text-2xl font-bold tracking-tight">市赚率 <span class="text-blue-500 text-sm font-normal">v1.0</span></h1>
-        <button onclick="toggleHistory()" class="p-2 glass-card rounded-full">
-            <i data-lucide="history" class="w-5 h-5"></i>
-        </button>
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight">市赚率 <span class="text-blue-500 text-sm">PR</span></h1>
+            <p id="lang-sub" class="text-[10px] text-gray-500">MARKET PROFIT RATE CALCULATOR</p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="toggleLang()" id="lang-btn" class="text-[10px] px-2 py-1 border border-gray-600 rounded text-gray-400">EN / 中</button>
+            <button onclick="toggleHistory()" class="p-2 glass-card rounded-full"><i data-lucide="history" class="w-4 h-4"></i></button>
+        </div>
     </header>
 
-    <!-- Main Form -->
+    <!-- UI View: Calculator -->
     <div id="calculator-view">
+        <!-- Mode Switch -->
         <div class="flex gap-2 mb-6">
-            <button id="mode-pe" onclick="setMode('PE')" class="flex-1 p-2 rounded-lg font-bold border border-blue-500 bg-blue-500/10 text-blue-500">PE 模式</button>
-            <button id="mode-pb" onclick="setMode('PB')" class="flex-1 p-2 rounded-lg font-bold border border-gray-700 text-gray-500">PB 模式</button>
+            <button id="mode-pe" onclick="setMode('PE')" class="flex-1 p-2 rounded-lg text-xs font-bold border border-blue-500 bg-blue-500/10 text-blue-500">PE MODE / 市盈率</button>
+            <button id="mode-pb" onclick="setMode('PB')" class="flex-1 p-2 rounded-lg text-xs font-bold border border-gray-700 text-gray-500">PB MODE / 市净率</button>
         </div>
 
         <div class="space-y-4">
-            <!-- Basic Info -->
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-xs text-gray-500 block mb-1">股票代码/名称</label>
-                    <input type="text" id="stockName" class="input-field" placeholder="例如: NVDA">
+            <!-- Basic Data Group -->
+            <div class="glass-card p-4 rounded-xl space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="label-text" data-zh="股票代码/名称" data-en="Stock Symbol/Name">Stock Symbol/Name</label>
+                        <input type="text" id="stockName" class="input-field" placeholder="NVDA / 4715.KL">
+                    </div>
+                    <div>
+                        <label class="label-text" id="valuationLabel" data-zh="市盈率 (PE TTM)" data-en="PE Ratio (ttm)">PE Ratio (ttm)</label>
+                        <input type="number" id="valuationValue" class="input-field" placeholder="0.00">
+                    </div>
                 </div>
-                <div>
-                    <label class="text-xs text-gray-500 block mb-1" id="valuationLabel">PE (TTM)</label>
-                    <input type="number" id="valuationValue" class="input-field" placeholder="数值">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="label-text" data-zh="净资产收益率 (ROE %)" data-en="Return on Equity (ttm)">Return on Equity (ttm)</label>
+                        <input type="number" id="roe" class="input-field" placeholder="27.29">
+                    </div>
+                    <div>
+                        <label class="label-text" data-zh="股息支付率 (Payout %)" data-en="Payout Ratio">Payout Ratio</label>
+                        <input type="number" id="payout" class="input-field" placeholder="50">
+                    </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-xs text-gray-500 block mb-1">ROE (%)</label>
-                    <input type="number" id="roe" class="input-field" placeholder="27.29">
+            <!-- Assistant Tool -->
+            <div class="glass-card p-4 rounded-xl bg-blue-500/5 border-blue-500/20">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-[11px] font-bold text-blue-400 uppercase" data-zh="AI 数据提取助手" data-en="AI Data Assistant">AI Data Assistant</span>
+                    <button onclick="copyPrompt()" class="text-[10px] bg-blue-500 text-white px-2 py-1 rounded" data-zh="复制提示词" data-en="Copy Prompt">Copy Prompt</button>
                 </div>
-                <div>
-                    <label class="text-xs text-gray-500 block mb-1">股利支付率 (%)</label>
-                    <input type="number" id="payout" class="input-field" placeholder="默认 50">
-                </div>
+                <textarea id="smartPaste" class="w-full h-16 bg-black/40 border border-gray-700 rounded p-2 text-[11px] text-gray-400 mb-2" placeholder="Paste Yahoo Data or AI Output here..."></textarea>
+                <button onclick="parseClipboard()" class="w-full py-2 bg-gray-800 text-[11px] font-bold rounded hover:bg-gray-700" data-zh="解析已粘贴内容" data-en="Parse & Fill Data">Parse & Fill Data</button>
             </div>
 
-            <!-- Smart Paste Tool -->
-            <div class="glass-card p-4 rounded-xl">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-xs font-semibold text-blue-400">智能粘贴解析 (AI 模式)</span>
-                    <button onclick="parseClipboard()" class="text-xs bg-blue-500/20 px-2 py-1 rounded text-blue-400">粘贴并解析</button>
-                </div>
-                <textarea id="smartPaste" class="w-full h-12 bg-black/40 border border-dashed border-gray-600 rounded p-2 text-xs text-gray-400" placeholder="复制 Yahoo/WSJ 的文本丢在这里..."></textarea>
-            </div>
-
-            <!-- Red Flags (Optional Toggles) -->
-            <details class="glass-card p-3 rounded-xl">
-                <summary class="text-sm text-gray-400 cursor-pointer">红灯检测指标 (可选)</summary>
-                <div class="grid grid-cols-1 gap-3 mt-3">
-                    <div class="flex gap-2">
-                        <input type="number" id="liabilities" class="input-field text-xs" placeholder="总负债">
-                        <input type="number" id="assets" class="input-field text-xs" placeholder="总资产">
+            <!-- Red Flags (Detailed) -->
+            <details class="glass-card p-4 rounded-xl">
+                <summary class="text-xs text-gray-400 cursor-pointer font-bold" data-zh="红灯检测指标 (对照财报)" data-en="Red Flag Metrics (Financials)">Red Flag Metrics (Financials)</summary>
+                <div class="grid grid-cols-1 gap-4 mt-4">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="label-text" data-zh="总负债 Total Liabilities" data-en="Total Liabilities">Total Liabilities</label>
+                            <input type="number" id="liabilities" class="input-field text-xs">
+                        </div>
+                        <div>
+                            <label class="label-text" data-zh="总资产 Total Assets" data-en="Total Assets">Total Assets</label>
+                            <input type="number" id="assets" class="input-field text-xs">
+                        </div>
                     </div>
-                    <div class="flex gap-2">
-                        <input type="number" id="opIncome" class="input-field text-xs" placeholder="营业利润">
-                        <input type="number" id="netIncome" class="input-field text-xs" placeholder="净利润">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="label-text" data-zh="营业利润 Operating Income" data-en="Operating Income">Operating Income</label>
+                            <input type="number" id="opIncome" class="input-field text-xs">
+                        </div>
+                        <div>
+                            <label class="label-text" data-zh="净利润 Net Income" data-en="Net Income Common">Net Income Common</label>
+                            <input type="number" id="netIncome" class="input-field text-xs">
+                        </div>
                     </div>
-                    <div class="flex gap-2">
-                        <input type="number" id="goodwill" class="input-field text-xs" placeholder="商誉+存货">
-                        <input type="number" id="impairment" class="input-field text-xs" placeholder="资产减值">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="label-text" data-zh="商誉+存货 Goodwill+Inv" data-en="Goodwill + Inventory">Goodwill + Inventory</label>
+                            <input type="number" id="goodwill" class="input-field text-xs">
+                        </div>
+                        <div>
+                            <label class="label-text" data-zh="资产减值 Impairment" data-en="Impairment Loss">Impairment Loss</label>
+                            <input type="number" id="impairment" class="input-field text-xs">
+                        </div>
                     </div>
-                    <div class="flex gap-2">
-                        <input type="number" id="opCashFlow" class="input-field text-xs" placeholder="经营现金流">
-                        <select id="industry" class="input-field text-xs">
-                            <option value="none">非周期行业</option>
-                            <option value="cycle">周期性行业 (航运/钢铁/大宗...)</option>
-                        </select>
+                    <div>
+                        <label class="label-text" data-zh="经营现金流 Op Cash Flow" data-en="Operating Cash Flow">Operating Cash Flow</label>
+                        <input type="number" id="opCashFlow" class="input-field text-xs">
                     </div>
+                    <select id="industry" class="input-field text-xs">
+                        <option value="none" data-zh="非周期行业" data-en="Non-Cyclical">Non-Cyclical</option>
+                        <option value="cycle" data-zh="周期性行业 (航运/钢铁/博彩)" data-en="Cyclical (Steel/Shipping/Casino)">Cyclical (Steel/Shipping/Casino)</option>
+                    </select>
                 </div>
             </details>
 
-            <button onclick="calculatePR()" class="btn-primary w-full shadow-lg shadow-blue-500/20">开始诊断</button>
+            <button onclick="calculatePR()" class="btn-primary w-full shadow-lg shadow-blue-500/20" data-zh="开始估值诊断" data-en="Run Diagnosis">Run Diagnosis</button>
         </div>
     </div>
 
-    <!-- Result View (Hidden by default) -->
-    <div id="result-view" class="hidden space-y-6 animate-in fade-in duration-500">
-        <div class="glass-card p-6 rounded-2xl text-center relative overflow-hidden">
-            <div id="rating-bg" class="absolute inset-0 opacity-10"></div>
-            <h2 class="text-gray-400 text-sm mb-1">当前市赚率 (PR)</h2>
+    <!-- Result View -->
+    <div id="result-view" class="hidden space-y-6">
+        <div class="glass-card p-6 rounded-2xl text-center">
+            <h2 class="text-gray-500 text-[11px] mb-2 font-bold uppercase tracking-widest" data-zh="市赚率估值结果" data-en="Valuation Result (PR)">Valuation Result (PR)</h2>
             <div id="pr-value" class="text-5xl font-bold mb-2">0.00</div>
-            <div id="pr-level" class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">---</div>
+            <div id="pr-level" class="inline-block px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">---</div>
         </div>
-
-        <!-- Red Flags Result -->
-        <div id="redflags-container" class="space-y-2">
-            <!-- Dynaimcally injected -->
-        </div>
-
-        <!-- Sensitivity Analysis -->
-        <div class="glass-card p-4 rounded-2xl">
-            <h3 class="text-xs font-bold text-gray-500 mb-4 uppercase tracking-wider">ROE 敏感性分析 (±30%)</h3>
-            <div class="flex justify-between items-center">
-                <div class="text-center flex-1 border-r border-gray-800">
-                    <div class="text-xs text-gray-500 mb-1">-30% ROE</div>
-                    <div id="sen-low" class="font-semibold">--</div>
-                </div>
-                <div class="text-center flex-1 border-r border-gray-800">
-                    <div class="text-xs text-gray-500 mb-1">当前 ROE</div>
-                    <div id="sen-mid" class="font-semibold text-blue-400">--</div>
-                </div>
-                <div class="text-center flex-1">
-                    <div class="text-xs text-gray-500 mb-1">+30% ROE</div>
-                    <div id="sen-high" class="font-semibold">--</div>
-                </div>
-            </div>
-        </div>
-
+        <div id="redflags-container" class="space-y-2"></div>
         <div class="flex gap-3">
-            <button onclick="saveHistory()" class="btn-primary flex-1 bg-green-600 shadow-green-500/10">保存记录</button>
-            <button onclick="resetApp()" class="btn-primary flex-1 bg-gray-800 text-gray-400">重新开始</button>
+            <button onclick="saveHistory()" class="btn-primary flex-1 bg-green-600 text-xs" data-zh="保存记录" data-en="Save Record">Save Record</button>
+            <button onclick="resetApp()" class="btn-primary flex-1 bg-gray-800 text-gray-400 text-xs" data-zh="返回" data-en="Back">Back</button>
         </div>
     </div>
 
-    <!-- History View (Hidden) -->
+    <!-- History View -->
     <div id="history-view" class="hidden space-y-4">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold">查询历史</h2>
-            <button onclick="clearAllHistory()" class="text-xs text-red-500">清空全部</button>
+        <div class="flex justify-between items-center">
+            <h2 class="text-lg font-bold" data-zh="历史记录" data-en="History">History</h2>
+            <button onclick="clearAllHistory()" class="text-[10px] text-red-500 uppercase font-bold" data-zh="清空" data-en="Clear All">Clear All</button>
         </div>
-        <div id="history-list" class="space-y-3">
-            <!-- Dynamic -->
-        </div>
-        <button onclick="toggleHistory()" class="w-full p-4 text-gray-500 text-sm">返回计算器</button>
+        <div id="history-list" class="space-y-3"></div>
+        <button onclick="toggleHistory()" class="w-full p-4 text-gray-500 text-xs font-bold uppercase">Close</button>
     </div>
 </div>
 
 <script>
     let currentMode = 'PE';
+    let lang = 'en';
     let history = JSON.parse(localStorage.getItem('pr_history') || '[]');
 
-    // Initialize Lucide Icons
     lucide.createIcons();
+
+    function toggleLang() {
+        lang = lang === 'zh' ? 'en' : 'zh';
+        document.querySelectorAll('[data-zh]').forEach(el => {
+            el.innerText = el.getAttribute('data-' + lang);
+        });
+        document.getElementById('lang-btn').innerText = lang === 'zh' ? 'ENGLISH / 英文' : '中文 / CHINESE';
+        updateValuationLabel();
+    }
 
     function setMode(mode) {
         currentMode = mode;
-        document.getElementById('mode-pe').className = mode === 'PE' ? 'flex-1 p-2 rounded-lg font-bold border border-blue-500 bg-blue-500/10 text-blue-500' : 'flex-1 p-2 rounded-lg font-bold border border-gray-700 text-gray-500';
-        document.getElementById('mode-pb').className = mode === 'PB' ? 'flex-1 p-2 rounded-lg font-bold border border-blue-500 bg-blue-500/10 text-blue-500' : 'flex-1 p-2 rounded-lg font-bold border border-gray-700 text-gray-500';
-        document.getElementById('valuationLabel').innerText = mode === 'PE' ? 'PE (TTM)' : 'PB (MRQ)';
+        document.getElementById('mode-pe').className = mode === 'PE' ? 'flex-1 p-2 rounded-lg text-xs font-bold border border-blue-500 bg-blue-500/10 text-blue-500' : 'flex-1 p-2 rounded-lg text-xs font-bold border border-gray-700 text-gray-500';
+        document.getElementById('mode-pb').className = mode === 'PB' ? 'flex-1 p-2 rounded-lg text-xs font-bold border border-blue-500 bg-blue-500/10 text-blue-500' : 'flex-1 p-2 rounded-lg text-xs font-bold border border-gray-700 text-gray-500';
+        updateValuationLabel();
+    }
+
+    function updateValuationLabel() {
+        const el = document.getElementById('valuationLabel');
+        if (currentMode === 'PE') {
+            el.innerText = lang === 'zh' ? '市盈率 (PE Ratio TTM)' : 'PE Ratio (ttm)';
+        } else {
+            el.innerText = lang === 'zh' ? '市净率 (PB Ratio MRQ)' : 'Price/Book (mrq)';
+        }
+    }
+
+    function copyPrompt() {
+        const prompt = `Please extract financial data for the following labels from the text I provide. 
+Look specifically for these Yahoo Finance labels or similar:
+- PE Ratio (ttm)
+- Return on Equity (ttm)
+- Payout Ratio
+- Total Liabilities
+- Total Assets
+- Operating Income
+- Net Income Common Stockholders
+- Goodwill
+- Inventory
+- Asset Impairment
+- Operating Cash Flow
+
+Format the output as follows:
+SYMBOL: [Value]
+PE: [Value]
+ROE: [Value]
+PAYOUT: [Value]
+ASSETS: [Value]
+LIAB: [Value]
+OP_INC: [Value]
+NET_INC: [Value]
+GOODWILL: [Value]
+INV: [Value]
+IMPAIR: [Value]
+OCF: [Value]`;
+        navigator.clipboard.writeText(prompt);
+        alert(lang === 'zh' ? "提示词已复制！请粘贴到 ChatGPT 并附带 Yahoo 网页文本。" : "Prompt Copied! Paste to AI with Yahoo Finance text.");
+    }
+
+    function parseClipboard() {
+        const text = document.getElementById('smartPaste').value;
+        const find = (keywords) => {
+            for (let k of keywords) {
+                const reg = new RegExp(`${k}[:\\s]+([\\d\\,\\.\\%\\-\\w\\(\\)]+)`, 'i');
+                const match = text.match(reg);
+                if (match && !isNaN(parseFloat(match[1].replace(/,/g, '')))) {
+                    return match[1].replace(/,/g, '').replace('%', '');
+                }
+            }
+            return null;
+        };
+
+        // Yahoo & AI Output Mapping
+        document.getElementById('valuationValue').value = find(['PE:','PE Ratio \\(ttm\\)','Trailing PE']);
+        document.getElementById('roe').value = find(['ROE:','Return on Equity \\(ttm\\)']);
+        document.getElementById('payout').value = find(['PAYOUT:','Payout Ratio']);
+        document.getElementById('assets').value = find(['ASSETS:','Total Assets']);
+        document.getElementById('liabilities').value = find(['LIAB:','Total Liabilities']);
+        document.getElementById('opIncome').value = find(['OP_INC:','Operating Income']);
+        document.getElementById('netIncome').value = find(['NET_INC:','Net Income Common Stockholders']);
+        document.getElementById('goodwill').value = find(['GOODWILL:','Goodwill']);
+        document.getElementById('impairment').value = find(['IMPAIR:','Asset Impairment','Impairment Loss']);
+        document.getElementById('opCashFlow').value = find(['OCF:','Operating Cash Flow']);
+        
+        const symbol = text.match(/SYMBOL:\s*([\w\.]+)/i);
+        if(symbol) document.getElementById('stockName').value = symbol[1];
+
+        alert(lang === 'zh' ? "解析尝试完成，请检查输入框。" : "Parsing attempted. Please verify inputs.");
     }
 
     function calculatePR() {
-        const stockName = document.getElementById('stockName').value || '未命名股票';
         const vValue = parseFloat(document.getElementById('valuationValue').value);
         const roe = parseFloat(document.getElementById('roe').value);
         let payout = parseFloat(document.getElementById('payout').value);
-        
-        if (isNaN(vValue) || isNaN(roe)) {
-            alert("请输入完整的估值和 ROE 数据");
-            return;
-        }
+        if (isNaN(vValue) || isNaN(roe)) return alert("Missing Basic Data");
 
-        // 盲区 A 处理
-        if (payout === 0) {
-            alert("该企业未分红，可能处于高速扩张期，不适用分红修正逻辑。");
-        }
-        if (isNaN(payout)) payout = 50;
-
-        // 1. 计算修正系数 N
         let N = 1;
         if (payout >= 50) N = 1;
         else if (payout <= 25) N = 2;
-        else N = 50 / payout;
+        else if (payout > 0) N = 50 / payout;
 
-        // 2. 计算 PR
-        let pr = 0;
-        if (currentMode === 'PE') {
-            pr = N * vValue / roe;
-        } else {
-            pr = (N * vValue / (roe * roe)) * 100;
-        }
-
-        displayResult(pr, stockName, N, roe, vValue, payout);
+        let pr = currentMode === 'PE' ? (N * vValue / roe) : (N * vValue / (roe * roe)) * 100;
+        showResult(pr);
     }
 
-    function displayResult(pr, name, N, roe, vValue, payout) {
+    function showResult(pr) {
         document.getElementById('calculator-view').classList.add('hidden');
         document.getElementById('result-view').classList.remove('hidden');
-
-        const prText = pr.toFixed(3);
-        document.getElementById('pr-value').innerText = prText;
-        
-        // 估值等级判别
-        const levelObj = getLevel(pr);
-        const levelEl = document.getElementById('pr-level');
-        levelEl.innerText = levelObj.text;
-        levelEl.style.backgroundColor = levelObj.color + '20';
-        levelEl.style.color = levelObj.color;
-        document.getElementById('pr-value').style.color = levelObj.color;
-
-        // 红灯检测计算
+        document.getElementById('pr-value').innerText = pr.toFixed(3);
+        const level = getLevel(pr);
+        const el = document.getElementById('pr-level');
+        el.innerText = level.text[lang];
+        el.style.color = level.color;
+        el.style.backgroundColor = level.color + '20';
+        document.getElementById('pr-value').style.color = level.color;
         runRedFlags();
-
-        // 敏感性分析
-        const lowROE = roe * 0.7;
-        const highROE = roe * 1.3;
-        let sLow, sHigh;
-        if (currentMode === 'PE') {
-            sLow = N * vValue / lowROE;
-            sHigh = N * vValue / highROE;
-        } else {
-            sLow = (N * vValue / (lowROE * lowROE)) * 100;
-            sHigh = (N * vValue / (highROE * highROE)) * 100;
-        }
-        document.getElementById('sen-low').innerText = sLow.toFixed(2);
-        document.getElementById('sen-mid').innerText = pr.toFixed(2);
-        document.getElementById('sen-high').innerText = sHigh.toFixed(2);
     }
 
     function getLevel(pr) {
-        if (pr < 0.40) return { text: "极度低估", color: "#10b981" };
-        if (pr < 0.60) return { text: "巴菲特四折区", color: "#34d399" };
-        if (pr < 0.80) return { text: "巴菲特六折区", color: "#60a5fa" };
-        if (pr <= 1.00) return { text: "合理偏低", color: "#93c5fd" };
-        if (pr <= 1.30) return { text: "偏高估值", color: "#f59e0b" };
-        return { text: "明显高估", color: "#ef4444" };
+        if (pr < 0.40) return { text: {zh:"极度低估", en:"Extremely Undervalued"}, color: "#10b981" };
+        if (pr < 0.60) return { text: {zh:"巴菲特四折区", en:"Buffett 40% Off"}, color: "#34d399" };
+        if (pr < 0.80) return { text: {zh:"巴菲特六折区", en:"Buffett 60% Off"}, color: "#60a5fa" };
+        if (pr <= 1.00) return { text: {zh:"合理偏低", en:"Fair Value (Low)"}, color: "#93c5fd" };
+        return { text: {zh:"估值偏高", en:"Overvalued"}, color: "#ef4444" };
     }
 
     function runRedFlags() {
         const container = document.getElementById('redflags-container');
         container.innerHTML = '';
-        let flags = [];
-
         const assets = parseFloat(document.getElementById('assets').value);
         const liab = parseFloat(document.getElementById('liabilities').value);
-        if (liab / assets > 0.7) flags.push({ t: "高负债红灯", v: `杠杆率 ${(liab/assets*100).toFixed(1)}% > 70%` });
-
-        if (document.getElementById('industry').value === 'cycle') flags.push({ t: "周期行业警告", v: "行业顶峰 PR 容易失真", type: 'warn' });
-
-        const opIn = parseFloat(document.getElementById('opIncome').value);
         const netIn = parseFloat(document.getElementById('netIncome').value);
-        if (opIn / netIn < 0.8) flags.push({ t: "非经常损益红灯", v: `核心利润占比 ${(opIn/netIn*100).toFixed(1)}% < 80%` });
+        const opIn = parseFloat(document.getElementById('opIncome').value);
 
-        const gw = parseFloat(document.getElementById('goodwill').value);
-        if (gw / assets > 0.15) flags.push({ t: "虚高资产红灯", v: `商誉存货占比 ${(gw/assets*100).toFixed(1)}% > 15%` });
+        const addFlag = (title, val) => {
+            container.innerHTML += `<div class="p-3 bg-red-500/10 rounded-xl border border-red-500/20 flex justify-between">
+                <span class="text-[10px] font-bold text-red-500 uppercase">${title}</span>
+                <span class="text-[10px] text-red-400">${val}</span>
+            </div>`;
+        };
 
-        const imp = parseFloat(document.getElementById('impairment').value);
-        if (imp / netIn > 0.1) flags.push({ t: "资产减值红灯", v: `减值占比 ${(imp/netIn*100).toFixed(1)}% > 10%` });
-
-        const cash = parseFloat(document.getElementById('opCashFlow').value);
-        if (cash / netIn < 0.8) flags.push({ t: "纸面富贵红灯", v: `现金净利比 ${(cash/netIn).toFixed(2)} < 0.8` });
-
-        if (flags.length === 0) {
-            container.innerHTML = `<div class="status-green text-xs p-2 bg-green-500/10 rounded-lg text-center font-bold">✅ 未触发红灯，数据可信度高</div>`;
-        } else {
-            flags.forEach(f => {
-                container.innerHTML += `
-                    <div class="flex justify-between items-center p-3 bg-red-500/10 rounded-xl border border-red-500/20">
-                        <span class="text-xs font-bold text-red-500">${f.t}</span>
-                        <span class="text-[10px] text-red-400">${f.v}</span>
-                    </div>
-                `;
-            });
-        }
+        if (liab / assets > 0.7) addFlag(lang === 'zh' ? "高负债" : "High Debt", `${(liab/assets*100).toFixed(1)}%`);
+        if (opIn / netIn < 0.8) addFlag(lang === 'zh' ? "非核心盈利" : "Non-Core Profit", `${(opIn/netIn*100).toFixed(1)}%`);
+        if (container.innerHTML === '') container.innerHTML = `<div class="text-center text-[10px] text-green-500 font-bold uppercase">✅ Low Risk / 财务稳健</div>`;
     }
 
     function saveHistory() {
         const record = {
             id: Date.now(),
-            name: document.getElementById('stockName').value || '未命名',
+            name: document.getElementById('stockName').value || 'Unknown',
             pr: document.getElementById('pr-value').innerText,
             level: document.getElementById('pr-level').innerText,
             date: new Date().toLocaleDateString()
         };
         history.unshift(record);
         localStorage.setItem('pr_history', JSON.stringify(history));
-        alert("已保存到本地记录");
+        alert("Saved!");
     }
 
     function toggleHistory() {
         const hv = document.getElementById('history-view');
         const cv = document.getElementById('calculator-view');
-        const rv = document.getElementById('result-view');
         if (hv.classList.contains('hidden')) {
             hv.classList.remove('hidden');
             cv.classList.add('hidden');
-            rv.classList.add('hidden');
             renderHistory();
         } else {
             hv.classList.add('hidden');
@@ -318,13 +333,10 @@
         list.innerHTML = history.map(item => `
             <div class="glass-card p-4 rounded-xl flex justify-between items-center">
                 <div>
-                    <div class="font-bold text-blue-400">${item.name}</div>
-                    <div class="text-[10px] text-gray-500">${item.date} · PR: ${item.pr}</div>
+                    <div class="font-bold text-blue-400 text-sm">${item.name}</div>
+                    <div class="text-[9px] text-gray-500 uppercase">${item.date} · PR: ${item.pr}</div>
                 </div>
-                <div class="flex items-center gap-3">
-                    <span class="text-xs font-bold text-gray-400">${item.level}</span>
-                    <button onclick="deleteHistory(${item.id})" class="text-red-900"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                </div>
+                <button onclick="deleteHistory(${item.id})" class="text-red-900"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </div>
         `).join('');
         lucide.createIcons();
@@ -336,74 +348,8 @@
         renderHistory();
     }
 
-    function clearAllHistory() {
-        if(confirm("确定清空吗？")) {
-            history = [];
-            localStorage.setItem('pr_history', '[]');
-            renderHistory();
-        }
-    }
-
-    function resetApp() {
-        location.reload();
-    }
-
-    // 智能解析逻辑 (AI Proxy 模拟)
-function parseClipboard() {
-    const text = document.getElementById('smartPaste').value;
-    
-    // 定义匹配规则
-    const extract = (regex) => {
-        const match = text.match(regex);
-        return match ? match[1].replace(/,/g, '') : null;
-    };
-
-    // 自动填充基础字段
-    const name = extract(/股票名称:\s*(.+)/);
-    if (name) document.getElementById('stockName').value = name;
-
-    const pe = extract(/PE_TTM:\s*([\d\.]+)/);
-    if (pe) document.getElementById('valuationValue').value = pe;
-
-    const roe = extract(/ROE:\s*([\d\.]+)/);
-    if (roe) document.getElementById('roe').value = roe;
-
-    const payout = extract(/股利支付率:\s*([\d\.]+)/);
-    if (payout) document.getElementById('payout').value = payout;
-
-    // 自动填充红灯检测字段
-    const assets = extract(/总资产:\s*([\d\.]+)/);
-    if (assets) document.getElementById('assets').value = assets;
-
-    const liab = extract(/总负债:\s*([\d\.]+)/);
-    if (liab) document.getElementById('liabilities').value = liab;
-
-    const opIn = extract(/营业利润:\s*([\d\.]+)/);
-    if (opIn) document.getElementById('opIncome').value = opIn;
-
-    const netIn = extract(/净利润:\s*([\d\.]+)/);
-    if (netIn) document.getElementById('netIncome').value = netIn;
-
-    const gw = extract(/商誉存货:\s*([\d\.]+)/);
-    if (gw) document.getElementById('goodwill').value = gw;
-
-    const imp = extract(/资产减值:\s*([\d\.]+)/);
-    if (imp) document.getElementById('impairment').value = imp;
-
-    const ocf = extract(/经营现金流:\s*([\d\.]+)/);
-    if (ocf) document.getElementById('opCashFlow').value = ocf;
-
-    const industry = extract(/行业:\s*(.+)/);
-    if (industry) {
-        // 简单的周期行业自动识别
-        const cycleKeywords = ['半导体', '航运', '钢铁', '煤炭', '石油', '化工', 'Semiconductors', 'Steel', 'Oil'];
-        const isCycle = cycleKeywords.some(k => industry.includes(k));
-        document.getElementById('industry').value = isCycle ? 'cycle' : 'none';
-    }
-
-    alert("✅ 解析完成！核心指标已自动填入表单。");
-}
+    function clearAllHistory() { if(confirm("Clear All?")) { history = []; localStorage.setItem('pr_history', '[]'); renderHistory(); } }
+    function resetApp() { location.reload(); }
 </script>
-
 </body>
 </html>
